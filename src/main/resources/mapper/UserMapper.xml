@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ⚠️注意：namespace 必须是你 UserMapper 接口的完整路径 -->
+<mapper namespace="com.shixun.simpleimserver.mapper.UserMapper">
+
+    <!-- 这里目前可以留空，MyBatis-Plus 自带了基础 CRUD -->
+
+</mapper>

@@ -1,0 +1,35 @@
+server:
+  port: 8080 # Web 端口
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher # 👈 加上这一行，解决 Swagger 启动报错
+  datasource:
+    # 确保你本地安装了MySQL，并且创建了名为 simple_im 的数据库
+    url: jdbc:mysql://localhost:3306/simple_im?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root        # 你的数据库账号
+    password: 123456 # ❗❗这里改成你的数据库密码❗❗
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# Netty 配置
+netty:
+  port: 8888  # WebSocket 端口
+  url: /im
+#mybatis-plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 控制台打印SQL
+  global-config:
+    db-config:
+      id-type: auto  # 主键策略
+
+# 日志配置
+logging:
+  level:
+    # 设置我们的mapper接口为DEBUG，这样会打印SQL语句
+    com.shixun.simpleimserver.mapper: debug
+    # 设置MyBatis的核心包为WARN，这样就不会打印连接信息等
+    org.apache.ibatis: warn
+    # 设置Spring的JDBC包为WARN
+    org.springframework.jdbc: warn
