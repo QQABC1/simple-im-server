@@ -1,6 +1,7 @@
 package com.shixun.simpleimserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.shixun.simpleimserver.config.security.LoginUser;
 import com.shixun.simpleimserver.entity.User;
 import com.shixun.simpleimserver.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +28,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在");
         }
 
-        // 2. 封装成 Spring Security 需要的 UserDetails 对象
-        // 参数：用户名，加密后的密码，权限列表(暂时给空列表)
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                Collections.emptyList()
-        );
+        //返回自定义的 LoginUser，把 user 实体传进去
+        return new LoginUser(user, Collections.emptyList());
     }
 }
