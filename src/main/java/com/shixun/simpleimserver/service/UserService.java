@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.shixun.simpleimserver.entity.User;
 import com.shixun.simpleimserver.model.dto.LoginDTO;
 import com.shixun.simpleimserver.model.dto.RegisterDTO;
+import com.shixun.simpleimserver.model.dto.UserPasswordDTO;
+import com.shixun.simpleimserver.model.dto.UserUpdateDTO;
+import com.shixun.simpleimserver.model.vo.UserVO;
 
 /**
  * 用户业务逻辑接口
@@ -18,5 +21,18 @@ public interface UserService extends IService<User> {
      */
     void register(RegisterDTO dto);
 
+    /**
+     * 获取当前登录用户信息
+     */
+    UserVO getCurrentUserInfo();
 
+    /**
+     * 修改个人资料
+     */
+    void updateUserInfo(UserUpdateDTO dto);
+
+    /**
+     * 修改密码
+     */
+    void updateUserPassword(UserPasswordDTO dto);
 }

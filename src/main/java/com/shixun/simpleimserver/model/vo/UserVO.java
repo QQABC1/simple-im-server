@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
-@ApiModel("用户公开信息")
+@ApiModel("用户详细信息")
 public class UserVO {
     @ApiModelProperty("用户ID")
     private Long id;
@@ -21,4 +21,7 @@ public class UserVO {
 
     @ApiModelProperty("个性签名")
     private String signature;
+
+    @ApiModelProperty("性别 0:保密 1:男 2:女")
+    private Integer gender;
 }
