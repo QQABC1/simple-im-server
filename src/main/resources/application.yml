@@ -2,6 +2,10 @@ server:
   port: 8080 # Web 端口
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB      # 单个文件大小限制
+      max-request-size: 50MB   # 单次请求总大小限制
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher # 👈 加上这一行，解决 Swagger 启动报错
@@ -33,3 +37,11 @@ logging:
     org.apache.ibatis: warn
     # 设置Spring的JDBC包为WARN
     org.springframework.jdbc: warn
+
+# 自定义文件配置
+file:
+  # ❗请根据你的电脑修改这个路径 (Windows示例: D:/im_uploads/ , Mac/Linux: /data/im_uploads/)
+  # 注意：文件夹必须先存在，或者代码里要写自动创建逻辑
+  upload-path: D:/im_uploads/
+  # 映射的访问前缀 (浏览器访问 http://localhost:8080/files/...)
+  access-path: /files/**

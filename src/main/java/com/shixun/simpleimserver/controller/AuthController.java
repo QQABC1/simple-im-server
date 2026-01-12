@@ -2,6 +2,7 @@ package com.shixun.simpleimserver.controller;
 
 import com.shixun.simpleimserver.common.result.Result;
 import com.shixun.simpleimserver.common.utils.JwtUtil;
+import com.shixun.simpleimserver.config.security.LoginUser;
 import com.shixun.simpleimserver.model.dto.LoginDTO;
 import com.shixun.simpleimserver.model.dto.RegisterDTO;
 import com.shixun.simpleimserver.service.UserService;
@@ -72,12 +73,14 @@ public class AuthController {
             // 3. 生成 Token
             String token = jwtUtil.generateToken(userDetails);
 
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
             // 4. 封装返回结果 (前端不仅需要Token，通常也需要展示用户头像昵称)
             // 这里需要再去查一次 User 实体获取头像昵称，或者 modify UserDetailsServiceImpl 让它携带更多信息
             Map<String, Object> map = new HashMap<>();
             map.put("token", token);
             map.put("tokenHead", "Bearer "); // 前端请求头拼接用
             map.put("username", userDetails.getUsername());
+            map.put("id",loginUser.getId());
 
             return Result.success(map);
 
