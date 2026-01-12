@@ -8,16 +8,17 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("`groups`") // groups 是关键字，加上反引号防止 SQL 报错
-public class Group {
+@TableName("group_members")
+public class GroupMember {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long ownerId;
+    private Long groupId;
 
-    private String groupName;
+    private Long userId;
 
-    private String notice;
+    /** 角色 1:普通成员 2:管理员 3:群主 */
+    private Integer role;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime joinTime;
 }
