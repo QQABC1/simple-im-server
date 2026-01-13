@@ -10,4 +10,5 @@ public interface MsgType {
     int HEARTBEAT = 4;   // 心跳包
     int AUTH = 5;        // 认证消息 (连接后第一条)
     int USER_STATUS = 6; // 用户状态变更通知 (Content: "1"上线, "0"下线)
+    int FRIEND_REQUEST = 7; // 好友申请通知
 }

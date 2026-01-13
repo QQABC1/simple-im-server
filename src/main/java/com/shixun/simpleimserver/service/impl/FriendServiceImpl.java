@@ -1,6 +1,8 @@
 package com.shixun.simpleimserver.service.impl;
 
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.shixun.simpleimserver.common.constant.MsgType;
 import com.shixun.simpleimserver.common.utils.SecurityUtils;
 import com.shixun.simpleimserver.entity.Friendship;
 import com.shixun.simpleimserver.entity.User;
@@ -10,8 +12,12 @@ import com.shixun.simpleimserver.model.dto.FriendAddDTO;
 import com.shixun.simpleimserver.model.dto.FriendApproveDTO;
 import com.shixun.simpleimserver.model.vo.ContactVO;
 import com.shixun.simpleimserver.model.vo.UserVO;
+import com.shixun.simpleimserver.model.ws.WSData;
+import com.shixun.simpleimserver.model.ws.WSMsg;
 import com.shixun.simpleimserver.netty.UserChannelMap;
 import com.shixun.simpleimserver.service.FriendService;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -108,9 +114,27 @@ public class FriendServiceImpl implements FriendService {
             friendshipMapper.updateById(existing);
         }
 
-        // 5. 【TODO】 WebSocket 实时通知
-        // 此处应调用 Netty 发送系统消息给 targetUserId
-        // pushService.sendSystemMsg(targetUserId, "有人请求添加你为好友");
+
+        // 5.实现 WebSocket 实时通知目标用户 (B)
+        // 获取对方的 Netty 通道
+        Channel targetChannel = UserChannelMap.get(targetUserId);
+
+        // 如果对方在线
+        if (targetChannel != null && targetChannel.isActive()) {
+            // 1. 构建 WebSocket 消息实体
+            WSMsg wsMsg = new WSMsg();
+            wsMsg.setType(MsgType.FRIEND_REQUEST); // Type = 7
+            wsMsg.setSenderId(currentUserId);      // 发送者是我
+
+            // 2. 构建数据载荷
+            WSData data = new WSData();
+            data.setContent("收到新的好友申请");    // 提示语
+            wsMsg.setData(data);
+
+            // 3. 序列化并发送
+            String jsonPush = JSON.toJSONString(wsMsg);
+            targetChannel.writeAndFlush(new TextWebSocketFrame(jsonPush));
+        }
     }
 
     /**
@@ -194,6 +218,7 @@ public class FriendServiceImpl implements FriendService {
             vo.setOnline(false);
             return vo;
         }).collect(Collectors.toList());
+
     }
 
     /**
