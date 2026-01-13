@@ -10,6 +10,7 @@ import com.shixun.simpleimserver.model.dto.FriendAddDTO;
 import com.shixun.simpleimserver.model.dto.FriendApproveDTO;
 import com.shixun.simpleimserver.model.vo.ContactVO;
 import com.shixun.simpleimserver.model.vo.UserVO;
+import com.shixun.simpleimserver.netty.UserChannelMap;
 import com.shixun.simpleimserver.service.FriendService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,8 +147,8 @@ public class FriendServiceImpl implements FriendService {
             vo.setAvatar(u.getAvatar());
             vo.setRemark(f.getRemark());
 
-            // TODO: 此处后续对接 Netty 获取真实在线状态
-            vo.setOnline(false); // 目前默认为离线
+            boolean isOnline = UserChannelMap.isOnline(u.getId());
+            vo.setOnline(isOnline);
 
             return vo;
         }).collect(Collectors.toList());
@@ -244,5 +245,16 @@ public class FriendServiceImpl implements FriendService {
             request.setStatus(2); // 2 代表已拒绝
             friendshipMapper.updateById(request);
         }
+    }
+
+    @Override
+    public List<Long> getFriendIdList(Long userId) {
+        return friendshipMapper.selectList(new LambdaQueryWrapper<Friendship>()
+                        .eq(Friendship::getUserId, userId)
+                        .eq(Friendship::getStatus, 1) // 1:已添加
+                        .select(Friendship::getFriendId)) // 只查 ID 字段，性能更高
+                .stream()
+                .map(Friendship::getFriendId)
+                .collect(Collectors.toList());
     }
 }

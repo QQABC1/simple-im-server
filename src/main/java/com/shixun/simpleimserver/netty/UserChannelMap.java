@@ -25,6 +25,10 @@ public class UserChannelMap {
      * 移除通道
      */
     public static void remove(Channel channel) {
+        if (channel == null) {
+            return;
+        }
+
         Long userId = channel.attr(USER_ID_KEY).get();
         if (userId != null) {
             userChannelMap.remove(userId);

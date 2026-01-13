@@ -41,4 +41,9 @@ public interface FriendService {
      * @param dto
      */
     void approveRequest(FriendApproveDTO dto);
+
+    /**
+     * 获取我的所有好友 ID 列表 (用于 Netty 广播)
+     */
+    List<Long> getFriendIdList(Long userId);
 }

@@ -67,19 +67,22 @@ public class AuthController {
             );
 
             // 2. 【优化点】直接从认证结果中获取用户信息，不要再去查数据库
-            // getPrincipal() 返回的就是 UserDetailsServiceImpl 里返回的对象
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
             // 3. 生成 Token
-            String token = jwtUtil.generateToken(userDetails);
+            String token = jwtUtil.generateToken(loginUser);
 
-            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+
             // 4. 封装返回结果 (前端不仅需要Token，通常也需要展示用户头像昵称)
             // 这里需要再去查一次 User 实体获取头像昵称，或者 modify UserDetailsServiceImpl 让它携带更多信息
             Map<String, Object> map = new HashMap<>();
             map.put("token", token);
             map.put("tokenHead", "Bearer "); // 前端请求头拼接用
-            map.put("username", userDetails.getUsername());
+            map.put("username", loginUser.getUsername());
+            //把昵称和头像也返回，方便前端展示
+            map.put("nickname", loginUser.getUserEntity().getNickname());
+            // 如果 avatar 为空，可以给个默认值防止前端报错（可选）
+            map.put("avatar", loginUser.getUserEntity().getAvatar());
             map.put("id",loginUser.getId());
 
             return Result.success(map);
