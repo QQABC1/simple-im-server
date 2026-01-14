@@ -90,6 +90,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        <!-- 阿里云 OSS SDK -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.17.4</version> <!-- 或使用较新的稳定版 -->
+        </dependency>
+
+        <!-- 读取 .env 文件的工具 -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>
 
     </dependencies>
     <dependencyManagement>
@@ -106,23 +119,29 @@
 
     <build>
         <plugins>
+            <!-- 1. 编译插件：指定 JDK 17 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>17</source> <!-- 修改为 17 -->
+                    <target>17</target> <!-- 修改为 17 -->
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+
+            <!-- 2. Spring Boot 打包插件：核心 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
+                <version>2.6.13</version> <!-- 建议指定具体版本，避免变量解析不到 -->
                 <configuration>
-                    <mainClass>com.shixun.simpleimserver.SimpleImServerApplication</mainClass>
-                    <skip>true</skip>
+                    <!-- ⚠️请仔细核对您的启动类路径，包名和类名必须完全正确 -->
+                    <!-- 之前代码里是 SimpleImApplication，您这里写的是 SimpleImServerApplication，请确认哪个是对的 -->
+                    <mainClass>com.shixun.simpleimserver.SimpleImApplication</mainClass>
+
+                    <!-- ❌ 删除了 <skip>true</skip>，这是报错的罪魁祸首！ -->
                 </configuration>
                 <executions>
                     <execution>

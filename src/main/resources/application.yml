@@ -12,7 +12,7 @@ spring:
   datasource:
     # 确保你本地安装了MySQL，并且创建了名为 simple_im 的数据库
     url: jdbc:mysql://localhost:3306/simple_im?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: root        # 你的数据库账号
+    username: root      # 你的数据库账号
     password: 123456 # ❗❗这里改成你的数据库密码❗❗
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -45,3 +45,4 @@ file:
   upload-path: D:/im_uploads/
   # 映射的访问前缀 (浏览器访问 http://localhost:8080/files/...)
   access-path: /files/**
+
