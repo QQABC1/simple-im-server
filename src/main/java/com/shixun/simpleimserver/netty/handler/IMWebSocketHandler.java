@@ -8,6 +8,7 @@ import com.shixun.simpleimserver.model.ws.WSMsg;
 import com.shixun.simpleimserver.netty.UserChannelMap;
 import com.shixun.simpleimserver.service.ChatService;
 import com.shixun.simpleimserver.service.FriendService;
+import com.shixun.simpleimserver.service.NotifyService;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,8 +26,9 @@ import java.util.List;
 public class IMWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     @Autowired
     private ChatService chatService;
+
     @Autowired
-    private FriendService friendService;
+    private NotifyService notifyService;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -44,7 +46,7 @@ public class IMWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
         if (userId != null) {
             System.out.println("用户下线: " + userId);
             // 广播下线通知 ("0")
-            notifyFriendStatus(userId, "0");
+            notifyService.notifyFriendStatusAsync(userId, "0");
         }
     }
 
@@ -112,7 +114,7 @@ public class IMWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
             sendJson(ctx.channel(), JSON.toJSONString(response));
 
             // 新增上线逻辑：广播上线通知 ("1")
-            notifyFriendStatus(userId, "1");
+            notifyService.notifyFriendStatusAsync(userId, "1");
 
         } catch (Exception e) {
             System.out.println("认证失败");
@@ -155,39 +157,5 @@ public class IMWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
         channel.writeAndFlush(new TextWebSocketFrame(msg));
     }
 
-    /**
-     *  新增辅助方法：通知所有在线好友状态变更
-     * @param userId 当前发生变化的用户ID
-     * @param status "1":上线, "0":下线
-     */
-    private void notifyFriendStatus(Long userId, String status) {
-        // TODO 优化思路异步执行，防止阻塞 Netty I/O 线程
-        // 如果没有线程池，暂时直接跑也没大问题，因为只是简单的内存操作
-        try {
-            // 1. 查出所有好友的 ID
-            List<Long> friendIds = friendService.getFriendIdList(userId);
 
-            if (friendIds == null || friendIds.isEmpty()) return;
-
-            // 2. 构建通知消息
-            WSMsg notifyMsg = new WSMsg();
-            notifyMsg.setType(MsgType.USER_STATUS); // Type = 6
-            notifyMsg.setSenderId(userId);          // 谁的状态变了
-            WSData data = new WSData();
-            data.setContent(status);                // 变成了什么状态
-            notifyMsg.setData(data);
-
-            String jsonStr = JSON.toJSONString(notifyMsg);
-
-            // 3. 遍历好友，如果在线就推送
-            for (Long friendId : friendIds) {
-                Channel friendChannel = UserChannelMap.get(friendId);
-                if (friendChannel != null && friendChannel.isActive()) {
-                    friendChannel.writeAndFlush(new TextWebSocketFrame(jsonStr));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

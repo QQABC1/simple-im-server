@@ -263,7 +263,6 @@ public class FriendServiceImpl implements FriendService {
                 friendshipMapper.updateById(reverse);
             }
 
-            // TODO: 调用 Netty 发送 WebSocket 消息通知申请方：“对方已同意”
 
         } else {
             // === 拒绝 ===
