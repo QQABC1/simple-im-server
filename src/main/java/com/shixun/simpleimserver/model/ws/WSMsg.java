@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class WSMsg {
+    private String id;          //消息唯一ID
     private Integer type;        // 消息类型 (参考 MsgType)
     private Long senderId;       // 发送者ID
     private Long receiverId;     // 接收者ID (好友ID 或 群ID)

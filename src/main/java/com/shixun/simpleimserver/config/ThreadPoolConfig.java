@@ -29,4 +29,31 @@ public class ThreadPoolConfig {
         executor.initialize();
         return executor;
     }
+
+    @Bean("taskExecutor")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+        // 1. 核心参数配置
+        // 核心线程数：服务器核数 * 2 (IO密集型推荐值)
+        int core = Runtime.getRuntime().availableProcessors() * 2;
+        executor.setCorePoolSize(core); // 例如 4核机器就是 8
+
+        // 最大线程数：核心数 * 2 ~ 4
+        executor.setMaxPoolSize(core * 4); // 例如 32
+
+        // 队列容量：不要太大，防止 OOM
+        executor.setQueueCapacity(500);
+
+        // 线程名前缀：方便在日志里排查问题 (例如: Async-Thread-1)
+        executor.setThreadNamePrefix("Global-Async-");
+
+        // 2. 拒绝策略 (CallerRunsPolicy)
+        // 重点：如果队列满了，线程也忙不过来了，不要抛异常，而是由“调用者所在的线程”自己去执行。
+        // 这是一种“背压”保护机制，防止系统被冲垮。
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
+        executor.initialize();
+        return executor;
+    }
 }

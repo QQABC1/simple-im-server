@@ -16,6 +16,26 @@ spring:
     password: 123456 # ❗❗这里改成你的数据库密码❗❗
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    # 开启发送确认机制 (保证消息一定到了 MQ，面试加分项)
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual  # 开启手动确认模式
+        concurrency: 4            # 开启 5 个消费者线程同时处理 (并发优化)
+        max-concurrency: 12
+        retry:
+          enabled: true          # 开启消费者重试
+          max-attempts: 3        # 最大重试次数 (包含第一次)
+          initial-interval: 1000ms # 第一次重试间隔 1秒
+          multiplier: 2.0        # 间隔倍数 (1s -> 2s -> 4s)
+          max-interval: 10000ms  # 最大间隔
+
 # Netty 配置
 netty:
   port: 8888  # WebSocket 端口

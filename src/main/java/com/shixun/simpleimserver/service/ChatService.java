@@ -21,4 +21,11 @@ public interface ChatService extends IService<Message> {
      * @param sessionType 会话类型 (1:单聊 2:群聊)
      */
     List<Message> getHistoryMsg(Long currentUserId, Long targetId, Integer sessionType);
+
+    /**
+     * 异步更新消息状态
+     * @param msgId 消息ID
+     * @param status 状态码 (例如 1 代表已送达)
+     */
+    void updateStatus(String msgId, Integer status);
 }
