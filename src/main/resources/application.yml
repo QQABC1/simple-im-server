@@ -8,13 +8,18 @@ spring:
       max-request-size: 50MB   # 单次请求总大小限制
   mvc:
     pathmatch:
-      matching-strategy: ant_path_matcher # 👈 加上这一行，解决 Swagger 启动报错
+      matching-strategy: ant-path-matcher
   datasource:
     # 确保你本地安装了MySQL，并且创建了名为 simple_im 的数据库
     url: jdbc:mysql://localhost:3306/simple_im?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root      # 你的数据库账号
     password: 123456 # ❗❗这里改成你的数据库密码❗❗
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 5000ms
 
   rabbitmq:
     host: localhost

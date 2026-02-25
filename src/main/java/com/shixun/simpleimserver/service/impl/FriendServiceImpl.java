@@ -20,13 +20,13 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +37,14 @@ public class FriendServiceImpl implements FriendService {
 
     @Autowired
     private FriendshipMapper friendshipMapper;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate; // 或者使用 StringRedisTemplate
+
+    // 定义 Redis Key 的前缀
+    private static final String FRIEND_SET_KEY_PREFIX = "im:friend:set:";
+    // 定义空集合的防穿透标志
+    private static final Long EMPTY_FLAG = -1L;
 
     /**
      * 搜索用户逻辑
@@ -230,6 +238,7 @@ public class FriendServiceImpl implements FriendService {
         // 1. 获取当前用户ID
         Long currentUserId = SecurityUtils.getUserId();
 
+
         // 2. 查申请记录
         Friendship request = friendshipMapper.selectById(dto.getRequestId());
         if (request == null) {
@@ -238,6 +247,7 @@ public class FriendServiceImpl implements FriendService {
         if (!request.getFriendId().equals(currentUserId)) {
             throw new RuntimeException("无权处理此申请");
         }
+        Long friendId = request.getFriendId();
 
         if (dto.getAgree()) {
             // === 同意 ===
@@ -263,6 +273,12 @@ public class FriendServiceImpl implements FriendService {
                 friendshipMapper.updateById(reverse);
             }
 
+            //  清理 Redis 缓存
+            //  清理当前操作人的缓存
+            stringRedisTemplate.delete(FRIEND_SET_KEY_PREFIX + currentUserId);
+            //  清理申请发起人的缓存
+            stringRedisTemplate.delete(FRIEND_SET_KEY_PREFIX + request.getUserId());
+
 
         } else {
             // === 拒绝 ===
@@ -273,12 +289,56 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     public List<Long> getFriendIdList(Long userId) {
-        return friendshipMapper.selectList(new LambdaQueryWrapper<Friendship>()
+        String redisKey = FRIEND_SET_KEY_PREFIX + userId;
+
+        // ================= 1. 查缓存 =================
+        // 使用 hasKey 精确判断缓存是否存在
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(redisKey))) {
+            // 取出来的是 Set<String>
+            Set<String> friendIdsStrSet = stringRedisTemplate.opsForSet().members(redisKey);
+
+            if (friendIdsStrSet != null && !friendIdsStrSet.isEmpty()) {
+                // 【防止缓存穿透】如果是空标记 "-1"，说明真没好友，直接返回空 List
+                if (friendIdsStrSet.contains(String.valueOf(EMPTY_FLAG))) {
+                    return Collections.emptyList();
+                }
+
+                // 正常命中，将 String 类型的 ID 转换回 Long 类型返回
+                return friendIdsStrSet.stream()
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+            }
+        }
+
+        // ================= 2. 查数据库 =================
+        // 缓存未命中，执行数据库查询（代码不变）
+        List<Long> dbFriendIds = friendshipMapper.selectList(new LambdaQueryWrapper<Friendship>()
                         .eq(Friendship::getUserId, userId)
                         .eq(Friendship::getStatus, 1) // 1:已添加
-                        .select(Friendship::getFriendId)) // 只查 ID 字段，性能更高
+                        .select(Friendship::getFriendId))
                 .stream()
                 .map(Friendship::getFriendId)
                 .collect(Collectors.toList());
+
+        // ================= 3. 写缓存 =================
+        if (dbFriendIds.isEmpty()) {
+            // 【防止缓存穿透】存入字符串 "-1"
+            stringRedisTemplate.opsForSet().add(redisKey, String.valueOf(EMPTY_FLAG));
+            stringRedisTemplate.expire(redisKey, 5, TimeUnit.MINUTES);
+        } else {
+            // 【核心变化】由于是 StringRedisTemplate，必须先将 List<Long> 转成 String[]
+            String[] idsStrArray = dbFriendIds.stream()
+                    .map(String::valueOf)
+                    .toArray(String[]::new);
+
+            // 批量将好友 ID (字符串) 放入 Redis Set
+            stringRedisTemplate.opsForSet().add(redisKey, idsStrArray);
+
+            // 【防止缓存雪崩】基础 7 天 + 随机 0~2 小时过期
+            long expireTimeSeconds = TimeUnit.DAYS.toSeconds(7) + new Random().nextInt(7200);
+            stringRedisTemplate.expire(redisKey, expireTimeSeconds, TimeUnit.SECONDS);
+        }
+
+        return dbFriendIds;
     }
 }

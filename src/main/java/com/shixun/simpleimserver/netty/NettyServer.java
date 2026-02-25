@@ -13,9 +13,12 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class NettyServer implements CommandLineRunner {
@@ -46,11 +49,10 @@ public class NettyServer implements CommandLineRunner {
                                 pipeline.addLast(new ChunkedWriteHandler());
                                 // 3. HTTP 消息聚合 (处理 FullHttpRequest)
                                 pipeline.addLast(new HttpObjectAggregator(64 * 1024));
-
                                 // 4. WebSocket 协议处理器
                                 // 处理握手、Ping/Pong，路径为 ws://localhost:8888/im
                                 pipeline.addLast(new WebSocketServerProtocolHandler("/im"));
-
+                                pipeline.addLast(new IdleStateHandler(60, 0, 0, TimeUnit.SECONDS));
                                 // 5. 自定义业务逻辑
                                 pipeline.addLast(imWebSocketHandler);
                             }

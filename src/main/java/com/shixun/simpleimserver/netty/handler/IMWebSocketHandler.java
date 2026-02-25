@@ -8,13 +8,14 @@ import com.shixun.simpleimserver.model.ws.WSMsg;
 import com.shixun.simpleimserver.netty.UserChannelMap;
 import com.shixun.simpleimserver.netty.handler.strategy.MessageHandler;
 import com.shixun.simpleimserver.netty.handler.strategy.MessageHandlerFactory;
-
 import com.shixun.simpleimserver.service.NotifyService;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.AttributeKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -74,6 +75,20 @@ public class IMWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("消息处理异常: " + e.getMessage());
+        }
+    }
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            if (event.state() == IdleState.READER_IDLE) {
+                System.out.println("检测到客户端长达60秒未发送数据，疑似假死，主动断开连接: " + ctx.channel().id());
+                // 毫不犹豫地关闭连接
+                // 关闭动作会自动触发本类中的 channelInactive() 方法，完成状态清理
+                ctx.close();
+            }
+        } else {
+            super.userEventTriggered(ctx, evt);
         }
     }
 
